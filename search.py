@@ -88,17 +88,145 @@ def depthFirstSearch(problem):
     
     "*** YOUR CODE HERE ***"
     #print(problem)
-    util.raiseNotDefined()
+    from util import Stack
+    height=problem.walls.height
+    width=problem.walls.width
+    visited = [[0 for y in range(height)] for x in range(width)]
+    pos=problem.getStartState()
+    visited[pos[0]][pos[1]]=1
+    paths=[]
+    positions=Stack()
+    positions.push(pos)
+    while True:
+        pos=positions.list[-1]
+        if problem.isGoalState(pos):
+            return paths
+        suc=problem.getSuccessors(pos)
+        flag=0
+        for i in suc:
+            if visited[i[0][0]][i[0][1]] == 0:
+                newpos=i[0]
+                visited[newpos[0]][newpos[1]] = 1
+                paths.append(i[1])
+                positions.push(newpos)
+                flag=1
+                break
+        if flag==0:
+            if len(paths)==0:
+                return []
+            paths.pop()
+            positions.pop()  
+
+    return []
+    #util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import Queue
+    positions=Queue()
+    pos=problem.getStartState()
+    positions.push(pos)
+    visited=[]
+    paths=Queue()
+    paths.push([])
+    while True:
+        pos=positions.pop()
+        visited.append(pos)
+        path=paths.pop()
+        #print(pos,len(path))
+        if problem.isGoalState(pos):
+            return path
+        suc=problem.getSuccessors(pos)
+        
+        for i in suc:
+            newpos=i[0]
+            if not newpos in visited:
+                path2=path.copy()
+                path2.append(i[1])
+                positions.push(newpos)
+                paths.push(path2)
+
+        if positions.isEmpty():
+            break
+
+    return []    
+    #util.raiseNotDefined()
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # Implemented a slightly different priority queue
+    # to enable an output indicating
+    # whether the update is successful.
+    # It can make path-output-ing very convenient.
+    import heapq
+    class PriorityQueue2:
+
+        def  __init__(self):
+            self.heap = []
+            self.count = 0
+
+        def push(self, item, priority):
+            entry = (priority, self.count, item)
+            heapq.heappush(self.heap, entry)
+            self.count += 1
+
+        def pop(self):
+            (_, _, item) = heapq.heappop(self.heap)
+            return item
+
+        def isEmpty(self):
+            return len(self.heap) == 0
+
+        def update(self, item, priority):
+            # If item already in priority queue with higher priority, update its priority and rebuild the heap.
+            # If item already in priority queue with equal or lower priority, do nothing.
+            # If item not in priority queue, do the same thing as self.push.
+            for index, (p, c, i) in enumerate(self.heap):
+                if i == item:
+                    if p <= priority:
+                        return 0
+                    del self.heap[index]
+                    self.heap.append((priority, c, item))
+                    heapq.heapify(self.heap)
+                    return 1
+            else:
+                self.push(item, priority)
+                return -1
+            
+    positions=PriorityQueue2()
+    pos=problem.getStartState()
+    positions.push(pos,0)
+    last={pos:[]}
+    visited=[]
+    while True:
+        pos=positions.heap[0][2]
+        cost=positions.heap[0][0]
+        positions.pop()
+        visited.append(pos)
+        
+        if problem.isGoalState(pos):
+            path=[]
+            while last[pos]!=[]:
+                path=[last[pos][1]]+path
+                pos=last[pos][0]
+            return path
+        suc=problem.getSuccessors(pos)
+        
+        for i in suc:
+            newpos=i[0]
+            if not newpos in visited:
+                upd=positions.update(newpos,cost+i[2])
+                if upd!=0:
+                    last[newpos]=[pos,i[1]]
+
+        if positions.isEmpty():
+            break
+
+    return []   
+    #util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
     """
